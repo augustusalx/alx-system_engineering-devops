@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Display To infinity and beyond indefinitely
-while :
+# This script is displaying "Holberton School" 10 times
+while true
 do
-	echo "To infinity and beyond"
-	sleep 2
+    echo "To infinity and beyond"
+    sleep 2
 done
-
