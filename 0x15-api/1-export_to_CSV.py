@@ -1,24 +1,34 @@
 #!/usr/bin/python3
+"""The script for parsing web data from an api
 """
-To export data in the CSV format
-"""
-
-import requests
-import csv
-from sys import argv
-
 if __name__ == "__main__":
-    if len(argv) > 1:
-        userId = argv[1]
-        url = "https://jsonplaceholder.typicode.com/"
-        r = requests.get("{}users/{}".format(url, userId))
-        username = r.json().get('username')
-        if username is not None:
-            todos = requests.get("{}users/{}/todos".format(url, userId)).json()
-        with open("{}.csv".format(userId), 'w', newline='') as csvfile:
-            writeFile = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-            for task in todos:
-                writeFile.writerow([int(userId),
-                                   username,
-                                   task.get('completed'),
-                                   task.get('title')])
+    import json
+    import sys
+    import requests
+    base_url = 'https://jsonplaceholder.typicode.com/'
+    try:
+        employee_id = sys.argv[1]
+    except:
+        print('Usage: {} employee_id'.format(sys.argv[0]))
+        exit(1)
+
+    # grab the info about the user
+    url = base_url + 'users?id={}'.format(employee_id)
+    response = requests.get(url)
+    user = json.loads(response.text)
+    user_name = user[0].get('username')
+
+    # grab the info about the user's tasks
+    url = base_url + 'todos?userId={}'.format(employee_id)
+    response = requests.get(url)
+    objs = json.loads(response.text)
+    builder = ""
+    for obj in objs:
+            builder += '"{}","{}","{}","{}"\n'.format(
+                employee_id,
+                user_name,
+                obj.get('completed'),
+                obj.get('title')
+            )
+    with open('{}.csv'.format(employee_id), 'w') as myFile:
+        myFile.write(builder)

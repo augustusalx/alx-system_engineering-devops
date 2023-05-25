@@ -1,26 +1,36 @@
 #!/usr/bin/python3
+"""The script for parsing web data from an api
 """
-To export to json
-"""
-
-import json
-from sys import argv
-import requests
-
 if __name__ == "__main__":
-    if len(argv) > 1:
-        userId = argv[1]
-        url = "https://jsonplaceholder.typicode.com/"
-        user = requests.get("{}users/{}".format(url, userId)).json()
-        username = user.get('username')
-        todos = requests.get("{}users/{}/todos".format(url, userId)).json()
-        t = [{"task": t.get("title"),
-              "completed": t.get("completed"),
-              "username": username} for t in todos]
-        bj = {}
-        bj[userId] = t
-        with open("{}.json".format(userId), 'w') as filejs:
-            json.dump(bj, filejs)
-    else:
-        print("usage: {} <user_id>".format(argv[0]))
+    import json
+    import requests
+    import sys
+    base_url = 'https://jsonplaceholder.typicode.com/'
+    try:
+        employee_id = sys.argv[1]
+    except:
+        print('Usage: {} employee_id'.format(sys.argv[0]))
         exit(1)
+
+    # will get the info about the user
+    url = base_url + 'users?id={}'.format(employee_id)
+    response = requests.get(url)
+    user = json.loads(response.text)
+    user_name = user[0].get('username')
+
+    # will get the info about the user's tasks
+    url = base_url + 'todos?userId={}'.format(employee_id)
+    response = requests.get(url)
+    objs = json.loads(response.text)
+    user_id_key = str(employee_id)
+    builder = {user_id_key: []}
+    for obj in objs:
+            json_data = {
+                "task": obj.get('title'),
+                "completed": obj.get('completed'),
+                "username": user_name
+            }
+            builder[user_id_key].append(json_data)
+    json_encoded_data = json.dumps(builder)
+    with open('{}.json'.format(employee_id), 'w') as myFile:
+        myFile.write(json_encoded_data)
