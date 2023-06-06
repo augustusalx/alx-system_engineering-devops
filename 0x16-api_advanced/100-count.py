@@ -1,47 +1,49 @@
 #!/usr/bin/python3
-"""Recursive function that queries the Reddit API"""
+"""
+This parses the title of all hot articles and prints a sorted count of given
+keywords (case-insensitive, delimited by spaces)
+"""
+from collections import OrderedDict
+from requests import get
 
 
-def count_words(subreddit, word_list, word_count={}, after=None):
-    """Queries the Reddit API and then returns the count of words in
-    word_list in the titles of all the hot posts
-    of the subreddit"""
-    import requests
+def count_words(subreddit, word_list, after=None, match_dict={}):
+    """it parses the title of all hot articles, and prints a sorted count of given
+    keywords (case-insensitive, delimited by spaces)
+    """
+    try:
+        r = get('https://www.reddit.com/r/{}/hot.json?limit=100&&'
+                'after={}'.format(subreddit, after),
+                headers={'User-Agent': 'bc'})
+        sub_dict = r.json()
 
-    query_info = requests.get("https://www.reddit.com/r/{}/hot.json"
-                            .format(subreddit),
-                            params={"after": after},
-                            headers={"User-Agent": "My-Agent"},
-                            allow_redirects=False)
-    if query_info.status_code != 200:
-        return None
+        if match_dict == {}:
+            for w in word_list:
+                match_dict[w] = 0
 
-    info = query_info.json()
+        after = sub_dict['data']['after']
 
-    hot_l = [child.get("data").get("title")
-             for child in info
-             .get("data")
-             .get("children")]
-    if not hot_l:
-        return None
+        for i in range(len(sub_dict['data']['children'])):
+            title_string = sub_dict['data']['children'][i]['data']['title']
+            search_list = title_string.split()
+            for word in search_list:
+                for w in word_list:
+                    if w.lower() == word.lower():
+                        match_dict[w] += 1
 
-    word_list = list(dict.fromkeys(word_list))
-
-    if word_count == {}:
-        word_count = {word: 0 for word in word_list}
-
-    for title in hot_l:
-        split_words = title.split(' ')
-        for word in word_list:
-            for s_word in split_words:
-                if s_word.lower() == word.lower():
-                    word_count[word] += 1
-
-    if not info.get("data").get("after"):
-        sorted_counts = sorted(word_count.items(), key=lambda kv: kv[0])
-        sorted_counts = sorted(word_count.items(),
-                               key=lambda kv: kv[1], reverse=True)
-        [print('{}: {}'.format(k, v)) for k, v in sorted_counts if v != 0]
-    else:
-        return count_words(subreddit, word_list, word_count,
-                           info.get("data").get("after"))
+        if after is None:
+            descend_dict = OrderedDict(sorted(match_dict.items(),
+                                              key=lambda x: x[1],
+                                              reverse=True))
+            zero_count = 0
+            for k, v in descend_dict.items():
+                if v != 0:
+                    print("{}: {}".format(k, v))
+                else:
+                    zero_count += 1
+            if zero_count == len(descend_dict):
+                print()
+        else:
+            count_words(subreddit, word_list, after, match_dict)
+    except:
+        pass
