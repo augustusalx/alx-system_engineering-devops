@@ -1,45 +1,33 @@
-# Configures Nginx to serve the complete AirBnB_clone_v4 application
-
 server {
-    # Listen on port 80.
-    listen      80 default_server;
-    listen      [::]:80 default_server ipv6only=on;
-
-    # Use server IP as the domain name
-    server_name 34.207.154.238;
-
-    # Customize HTTP response header
-    add_header  X-Served-By 178350-web-02;
-
-    # Serve /airbnb-onepage/ route on AirBnB_clone_v2
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    root   /var/www/html;
+    index  index.html index.htm;
+    # Serve /airbnb-onepage/ route from AirBnB_clone_v2
     location = /airbnb-onepage/ {
         proxy_pass http://127.0.0.1:5000/airbnb-onepage/;
     }
-
     # Serve /number_odd_or_even/ route on AirBnB_clone_v2
     location ~ /airbnb-dynamic/number_odd_or_even/(\d+)$ {
         proxy_pass http://127.0.0.1:5001/number_odd_or_even/$1;
     }
-
-    # Serve AirBnB_clone_v3 API
-    location /api {
-        proxy_pass http://127.0.0.1:5002/api;
+    # Serve /api route on AirBnB_clone_v3
+    location /api/ {
+        proxy_pass http://127.0.0.1:5002;
     }
-
-    # Configures /2-hbnb route of AirBnB_clone_v4 as root location
+    location /redirect_me {
+        return 301 https://www.youtube.com/watch?v=DHITmcKUGik;
+    }
+    # Serves /api route on AirBnB_clone_v4
     location / {
-        proxy_pass http://127.0.0.1:5003/2-hbnb;
+    http://127.0.0.1:5003/2-hbnb;
     }
-
-    # Serves static content for AirBnB_clone_v4
-    location /static {
-        proxy_pass http://127.0.0.1:5003;
+    location /web_dynamic/ {
+    # proxy_pass http://127.0.0.1:5003/web_dynamic/static;
     }
-
-    # 404 error page
     error_page 404 /404.html;
     location /404 {
-        root /var/www/html;
-        internal;
+      root /var/www/html;
+      internal;
     }
 }
